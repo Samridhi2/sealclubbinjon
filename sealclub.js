@@ -11,7 +11,8 @@
 var canvas,
 	ctx,
 	player,
-	entities;
+	entities,
+	fps = 45;
 const SCALE = 1;
 
 function Player() {
@@ -250,7 +251,8 @@ function init() {
 	window.addEventListener("mousemove",player.updateArmAngle,false);
 
 	//begin game loop
-	window.setInterval(update, 10);
+	//window.setInterval(update, 10);
+	update();
 }
 
 function draw() {
@@ -269,6 +271,10 @@ function draw() {
 }
 
 function update() {
+	setTimeout(function() {
+        requestAnimationFrame(update);
+        // Drawing code goes here
+    }, 1000 / fps);
 	//for (var i = 0; i < entities; i++) {entities[i].update();}
 	player.update();
 	testSeal.update();
