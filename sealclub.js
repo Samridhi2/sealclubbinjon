@@ -136,8 +136,16 @@ function Seal() {
 	this.dy = 0;
 	this.colliding = false;
 	this.sealScale = 2;
-	this.DECAY = 1.0;
-	this.RANDOMMOVEMENTBOUND = 20;
+
+	//constants
+	this.XDECAY = .2;
+	this.YDECAY = .5;
+	this.DECAY = .2;
+	this.RANDOMMOVEMENTBOUNDX = 200;
+	this.RANDOMMOVEMENTBOUNDY = 5;
+	this.RANDOMMOVEMENTBOUND = 10;
+
+	//states
 	this.RANDOM = 0;
 	this.ESCAPE = 1;
 	this.state = this.RANDOM;
@@ -195,10 +203,10 @@ function Seal() {
 		return result;
 	}
 	this.decayMovement = function() {
-		if (this.state = this.RANDOM) {
-			this.dx = Math.sign(this.dx)*(Math.abs(this.dx-this.DECAY/SCALE));
+		if (this.state === this.RANDOM) {
+			this.dx = Math.sign(this.dx)*(Math.abs(Math.abs(this.dx)-this.DECAY/SCALE));
 			this.dy = //Math.sign(this.dy)*(Math.abs(this.dy-this.DECAY/SCALE));
-					  this.dy + (canvas.height/12)*Math.abs(this.dy);
+					  this.dy + this.YDECAY;//*Math.abs(this.dy);
 		}
 		else {
 
@@ -210,7 +218,7 @@ function Seal() {
 	}
 	this.isStationary = function() {
 		//DOESN'T WORK
-		var result = (this.dx === 0 && this.dy === 0);
+		var result = ( (Math.abs(this.dx) - .2 < 0)  && (Math.abs(this.dy) - .7 < 0));
 					 //(this.dx === 0 && this.dy <= this.DECAY/SCALE && this.y >= canvas.height - this.img.height - this.DECAY/SCALE);
 		//console.log(result);
 		return result;
