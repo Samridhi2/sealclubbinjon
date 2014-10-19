@@ -31,10 +31,12 @@ function Player() {
 	this.ARMXBUFFER = 100;
 	this.ARMYBUFFER = 230;
 	//amount x should change per tick
-	this.MOVEPERTICK = 20;
+	this.MOVEPERTICK = 13;
 
 	this.bodyX = 0;
 	this.bodyY = 0;
+	this.dx = 0;
+	this.dy = 0;
 
 	this.armX = this.ARMXBUFFER/SCALE;
 	this.armY = this.ARMYBUFFER/SCALE;
@@ -45,25 +47,29 @@ function Player() {
 	this.armYAdjustment = 30;
 
 	//updates the body's position based on keypress input
-	this.updateBody = function(e) {
+	this.keyDown = function(e) {
 		var keyCode = e.keyCode;
 		console.log(keyCode);
 		//console.log(player.bodyX);
 		switch (keyCode) {
 			case 65: {
-				player.bodyX = player.bodyX + (-1)*player.MOVEPERTICK;
+				//player.bodyX = player.bodyX + (-1)*player.MOVEPERTICK;
+				player.dx = (-1)*player.MOVEPERTICK;
 				break;
 			}
 			case 37: {
-				player.bodyX += (-1)*player.MOVEPERTICK;
+				//player.bodyX += (-1)*player.MOVEPERTICK;
+				player.dx = (-1)*player.MOVEPERTICK;
 				break;
 			}
 			case 39: {
-				player.bodyX += player.MOVEPERTICK;
+				//player.bodyX += player.MOVEPERTICK;
+				player.dx = player.MOVEPERTICK;
 				break;
 			}
 			case 68: {
-				player.bodyX += player.MOVEPERTICK;
+				//player.bodyX += player.MOVEPERTICK;
+				player.dx = player.MOVEPERTICK;
 				break;
 			}
 			case 69: {
@@ -77,7 +83,48 @@ function Player() {
 		}
 	}
 
+	this.keyUp = function(e) {
+		var keyCode = e.keyCode;
+
+		switch (keyCode) {
+			case 65: {
+				//player.bodyX = player.bodyX + (-1)*player.MOVEPERTICK;
+				player.dx = 0;
+				break;
+			}
+			case 37: {
+				//player.bodyX += (-1)*player.MOVEPERTICK;
+				player.dx = 0;
+				break;
+			}
+			case 39: {
+				//player.bodyX += player.MOVEPERTICK;
+				player.dx = 0;
+				break;
+			}
+			case 68: {
+				//player.bodyX += player.MOVEPERTICK;
+				player.dx = 0;
+				break;
+			}
+			case 69: {
+				//player.currentBody = "bodyHappy";
+				break;
+			}
+			case 81: {
+				//player.currentBody = "body";
+				break;
+			}
+		}
+
+	}
+	this.updateBody = function() {
+		this.bodyX = this.bodyX + this.dx;
+		this.bodyY = this.bodyY + this.dy;
+	}
+
 	this.update = function() {
+		this.updateBody();
 		this.updateArm();
 	}
 
@@ -97,7 +144,13 @@ function Player() {
 		player.armAngle = rad;
 						  //(180+(180+(rad*180/Math.PI)))%360;
 	}
-
+	this.drawBody = function() {
+		ctx.drawImage(player[player.currentBody],
+					player.bodyX,
+					player.bodyY,
+					player.body.width/SCALE,
+					player.body.height/SCALE);
+	}
 	this.drawArmRot = function() {
 		//save normal canvas context
 		ctx.save();
@@ -131,19 +184,19 @@ function Seal() {
 	img.src = "img/seal.png";
 	this.img = img;
 
+	this.sealScale = 2;
 	this.x = 0;
-	this.y = canvas.height - this.img.height;
+	this.y = canvas.height - this.img.height/this.sealScale/SCALE;
 	this.dx = 0;
 	this.dy = 0;
 	this.colliding = false;
-	this.sealScale = 2;
 
 	//constants
 	this.XDECAY = .2;
 	this.YDECAY = .5;
 	this.DECAY = .2;
-	this.RANDOMMOVEMENTBOUNDX = 200;
-	this.RANDOMMOVEMENTBOUNDY = 5;
+	this.RANDOMMOVEMENTBOUNDX = 15;
+	this.RANDOMMOVEMENTBOUNDY = 30;
 	this.RANDOMMOVEMENTBOUND = 10;
 
 	//states
@@ -161,8 +214,8 @@ function Seal() {
 		else if //(this.isOnGround() && this.isStationary()) {
 				(this.isStationary()) {
 			//console.log("working");
-			this.dx = this.getRandomMovement();
-			this.dy = this.getRandomMovement();
+			this.dx = this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
+			this.dy = this.getRandomMovement(this.RANDOMMOVEMENTBOUNDY);
 		}
 		////////
 		if (this.dx + this.x > canvas.width - this.img.width/this.sealScale/SCALE) {
@@ -189,10 +242,6 @@ function Seal() {
 
 		//decay vals
 		this.decayMovement();
-	    //should be adjusted for better gravity simulation
-				  //Math.sign(this.dy)*(Math.abs(this.dy))+this.DECAY/SCALE;
-		//console.log(this.dx);
-		//console.log(this.dy);
 	}
 
 	this.draw = function() {
@@ -200,28 +249,23 @@ function Seal() {
 	}
 	this.isOnGround = function() {
 		var result = (this.y >= (canvas.height - this.img.height/SCALE - this.DECAY/SCALE));
-		//console.log(result);
 		return result;
 	}
 	this.decayMovement = function() {
 		if (this.state === this.RANDOM) {
-			this.dx = Math.sign(this.dx)*(Math.abs(Math.abs(this.dx)-this.DECAY/SCALE));
-			this.dy = //Math.sign(this.dy)*(Math.abs(this.dy-this.DECAY/SCALE));
-					  this.dy + this.YDECAY;//*Math.abs(this.dy);
+			this.dx = Math.sign(this.dx)*(Math.abs(this.dx-this.DECAY/SCALE));
+			this.dy = this.dy + this.YDECAY; //always + YDECAY because gravity
 		}
 		else {
 
 		}
 	}
-	this.getRandomMovement = function() {
+	this.getRandomMovement = function(bound) {
 		var sign = Math.random() < .5 ? -1 : 1;
-		return sign*Math.floor(Math.random()*this.RANDOMMOVEMENTBOUND);
+		return sign*Math.floor(Math.random()*bound);
 	}
 	this.isStationary = function() {
-		//DOESN'T WORK
-		var result = ( (Math.abs(this.dx) - .2 < 0)  && (Math.abs(this.dy) - .7 < 0));
-					 //(this.dx === 0 && this.dy <= this.DECAY/SCALE && this.y >= canvas.height - this.img.height - this.DECAY/SCALE);
-		//console.log(result);
+		var result = ( (Math.abs(this.dx) - .2 < 0) && (Math.abs(this.dy) - .7 < 0));
 		return result;
 	}
 	this.checkCollision = function() {
@@ -247,11 +291,11 @@ function init() {
 	player = new Player();
 	testSeal = new Seal();
 
-	window.addEventListener("keydown",player.updateBody, false);
+	window.addEventListener("keydown",player.keyDown, false);
+	window.addEventListener("keyup",player.keyUp, false);
 	window.addEventListener("mousemove",player.updateArmAngle,false);
 
 	//begin game loop
-	//window.setInterval(update, 10);
 	update();
 }
 
@@ -260,13 +304,8 @@ function draw() {
 	ctx.clearRect(0,0,1000,1000);
 
 	//draw body
-	ctx.drawImage(player[player.currentBody],
-					player.bodyX,
-					player.bodyY,
-					player.body.width/SCALE,
-					player.body.height/SCALE);
+	player.drawBody();
 	//draw arm
-	////drawImageRot(player.arm,player.armX,player.armY,player.arm.width/SCALE,player.arm.height/SCALE,player.armAngle);
 	player.drawArmRot();
 }
 
@@ -286,28 +325,3 @@ function update() {
 }
 
 init();
-
-
-
-
-//taken from StackOverflow 
-//http://stackoverflow.com/questions/2677671/how-do-i-rotate-a-single-object-on-an-html-5-canvas
-/*
-function drawImageRot(img,x,y,width,height,deg){
-	//Convert degrees to radian 
-	var rad = deg * Math.PI / 180;
-
-    //Set the origin to the center of the image
-    ctx.translate(x + width / 2, y + height / 2);
-
-    //Rotate the canvas around the origin
-    ctx.rotate(rad);
-
-    //draw the image    
-    ctx.drawImage(img,width / 2 * (-1),height / 2 * (-1),width,height);
-
-    //reset the canvas  
-    ctx.rotate(rad * ( -1 ) );
-    ctx.translate((x + width / 2) * (-1), (y + height / 2) * (-1));
-}
-*/
