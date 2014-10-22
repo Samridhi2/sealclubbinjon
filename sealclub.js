@@ -174,6 +174,10 @@ function Player() {
 		//normality restored
 		ctx.restore();
 	}
+	this.draw = function() {
+		this.drawBody();
+		this.drawArmRot();
+	}
 
 }
 
@@ -291,6 +295,8 @@ function init() {
 	player = new Player();
 	testSeal = new Seal();
 
+	entities = [player, testSeal];
+
 	window.addEventListener("keydown",player.keyDown, false);
 	window.addEventListener("keyup",player.keyUp, false);
 	window.addEventListener("mousemove",player.updateArmAngle,false);
@@ -299,29 +305,27 @@ function init() {
 	update();
 }
 
-function draw() {
+function draw(entities, canvas, ctx) {
 	//erase
-	ctx.clearRect(0,0,1000,1000);
+	ctx.clearRect(0,0,canvas.width,canvas.height);
 
-	//draw body
-	player.drawBody();
-	//draw arm
-	player.drawArmRot();
+	for (var i = 0; i < entities.length; i++) {
+		entities[i].draw();
+	}
 }
 
 function update() {
 	setTimeout(function() {
         requestAnimationFrame(update);
-        // Drawing code goes here
     }, 1000 / fps);
-	//for (var i = 0; i < entities; i++) {entities[i].update();}
-	player.update();
-	testSeal.update();
+	
+	for (var i = 0; i < entities.length; i++) {entities[i].update();}
+
 	//gameController.update();
 	//-->would decide whether to add new seals or not, randomly and based on counter
 	//for entities, draw them
-	draw();
-	testSeal.draw();
+	draw(entities, canvas, ctx);
+	
 }
 
 init();
