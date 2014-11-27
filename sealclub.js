@@ -3,8 +3,12 @@
 //WITH HELP FROM PAKDEE, PAUL, THEO AND OTHERS
 
 //TO DO:
-//	change setInterval to requestanimationframe
+//	change setInterval to requestanimationframe √
 //  make global variables not that anymore
+//  change collisions to reflect direction of collision and alter dx, dy accordingly
+//  add start screen (low priority)
+//  make Jon's face light up when he hits a seal √ (sort of)
+//  make Jon able to crouch / make image of Jon crouching
 
 
 
@@ -12,15 +16,16 @@ var canvas,
 	ctx,
 	player,
 	entities,
-	fps = 45;
+	FPS = 45;
 const SCALE = 1;
 
 function Player() {
+	//IMAGES
 	var img = new Image();
 	img.src = "img/jon-bod.png";
 	this.body = img;
 	var army = new Image();
-	army.src = "img/jon-arm-club-box.png";
+	army.src = "img/jon-arm-club.png";
 	this.arm = army;
 	var img2 = new Image();
 	img2.src = "img/jon-bod-happy.png";
@@ -30,55 +35,72 @@ function Player() {
 	img3.src = "img/dot.png";
 	this.dot = img3;
 
-	//amount arm must be displaced to be properly located on image of Jon
-	this.ARMXBUFFER = 100;
-	this.ARMYBUFFER = 230;
+	//MOVEMENT
 	//amount x should change per tick
 	this.MOVEPERTICK = 13;
-
-	this.bodyX = 0;
-	this.bodyY = 0;
 	this.dx = 0;
 	this.dy = 0;
 
-	this.armX = this.ARMXBUFFER/SCALE;
-	this.armY = this.ARMYBUFFER/SCALE;
-	this.armAngle = 0;
+	//BODY
+	this.bodyX = 0;
+	this.bodyY = 0;
 
+	//ARM
+	//amount arm must be displaced to be properly located on image of Jon
+	this.ARMXBUFFER = 100;
+	this.ARMYBUFFER = 230;
+	this.armX = this.bodyX + this.ARMXBUFFER/SCALE;
+	this.armY = this.bodyY + this.ARMYBUFFER/SCALE;
+	this.armAngle = 0;
 	//used in drawing rotated arm
 	this.armXAdjustment = 30;
 	this.armYAdjustment = 30;
 
+	//COLLISION
 	//collision stuff
 	this.clubBufferX = 16*this.arm.width/10 / SCALE;
 	this.clubBufferY = 200/SCALE;//7*this.arm.width/10 / SCALE;
-	this.collisionx;
-	this.collisiony;
+	this.collisionX;
+	this.collisionY;
 	this.colliding = false;
+	this.collideTimer = {
+		date: undefined, //holds new Date() instances
+		startTime: undefined, //holds seconds 
+		currentTime: undefined, //holds seconds
+		duration: 1, //duration is amount of seconds desired, start time
+
+		reset: function() {
+			this.date = new Date();
+			this.startTime = this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
+			this.currentTime = this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
+		},
+
+		timeIsUp : function() {
+			this.date = new Date();
+			this.currentTime = this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
+			return (this.startTime <= (this.currentTime - this.duration));
+		}
+	};
+	this.collideTimer.reset();
 
 	//updates the body's position based on keypress input
 	this.keyDown = function(e) {
 		var keyCode = e.keyCode;
-		console.log(keyCode);
-		//console.log(player.bodyX);
+
 		switch (keyCode) {
-			case 65: {
-				//player.bodyX = player.bodyX + (-1)*player.MOVEPERTICK;
+			case 65: {;
 				player.dx = (-1)*player.MOVEPERTICK;
 				break;
 			}
 			case 37: {
-				//player.bodyX += (-1)*player.MOVEPERTICK;
 				player.dx = (-1)*player.MOVEPERTICK;
 				break;
 			}
 			case 39: {
-				//player.bodyX += player.MOVEPERTICK;
 				player.dx = player.MOVEPERTICK;
 				break;
 			}
 			case 68: {
-				//player.bodyX += player.MOVEPERTICK;
 				player.dx = player.MOVEPERTICK;
 				break;
 			}
@@ -98,31 +120,25 @@ function Player() {
 
 		switch (keyCode) {
 			case 65: {
-				//player.bodyX = player.bodyX + (-1)*player.MOVEPERTICK;
 				player.dx = 0;
 				break;
 			}
 			case 37: {
-				//player.bodyX += (-1)*player.MOVEPERTICK;
 				player.dx = 0;
 				break;
 			}
 			case 39: {
-				//player.bodyX += player.MOVEPERTICK;
 				player.dx = 0;
 				break;
 			}
 			case 68: {
-				//player.bodyX += player.MOVEPERTICK;
 				player.dx = 0;
 				break;
 			}
 			case 69: {
-				//player.currentBody = "bodyHappy";
 				break;
 			}
 			case 81: {
-				//player.currentBody = "body";
 				break;
 			}
 		}
@@ -131,6 +147,15 @@ function Player() {
 	this.updateBody = function() {
 		this.bodyX = this.bodyX + this.dx;
 		this.bodyY = this.bodyY + this.dy;
+		if (this.colliding) {
+			this.collideTimer.reset();
+		}
+		if (this.colliding || !(this.collideTimer.timeIsUp())) {
+			this.currentBody = "bodyHappy";
+		}
+		else {
+			this.currentBody = "body";
+		}
 	}
 
 	this.update = function() {
@@ -165,11 +190,8 @@ function Player() {
 	}
 
 	function updateCollisionPoint() {
-		//var xmult = player.clubBufferX - (player.armX + player.arm.width/SCALE - player.armXAdjustment/SCALE);
-		//var ymult = player.clubBufferY - (player.armY + player.armYAdjustment/SCALE);
-		//player.collisionx = (xmult)*Math.cos(player.armAngle) - (ymult)*Math.sin(player.armAngle) + (player.armX + player.arm.width/SCALE - player.armXAdjustment/SCALE); //+ 1.6*player.arm.width/SCALE;
-		//player.collisiony = (xmult)*Math.sin(player.armAngle) + (ymult)*Math.cos(player.armAngle) + (player.armY + player.armYAdjustment/SCALE); //+ 1.3*player.arm.height/SCALE;
-		//console.log(player.collisionx + ", " + player.collisiony);
+
+		//object: locations with respect to the Object
 		var object_x = -140;
 		var object_y = 5;
 		// xxx immoral copying of code
@@ -187,29 +209,30 @@ function Player() {
 		var combined_mat = mat_mult(rotate_mat,translate_mat);
 		var draw_vec = vecmat_mult(object_vec, combined_mat);
 		
+		//draw: locations with respect to the Canvas
 		var draw_x = draw_vec[0];
 		var draw_y = draw_vec[1];
-		player.collisionx = draw_x;
-		player.collisiony = draw_y;
+		player.collisionX = draw_x;
+		player.collisionY = draw_y;
 	}
 
-	//updates the arms X and Y positions on setInterval
+	//updates the arms X and Y positions every timestep
 	this.updateArm = function() {
 		player.armX = player.bodyX + player.ARMXBUFFER/SCALE;
 		player.armY = player.bodyY + player.ARMYBUFFER/SCALE;
 		updateCollisionPoint();
 	}
 
-	//makes player.armAngle number of DEGREES (not radians) to rotate image
+	//makes player.armAngle number of radians to rotate image on mousemove
 	this.updateArmAngle = function(e) {
-		//console.log(e.pageX);
 		var x = e.pageX;
 		var y = e.pageY;
-		var rad = Math.atan2((player.bodyY+player.armY-y),(player.bodyX+player.armX+player.arm.width/SCALE-x));
-		//console.log(rad);
+		var rad = Math.atan2((player.bodyY+player.ARMYBUFFER/SCALE-y),(player.bodyX+player.ARMXBUFFER/SCALE+player.arm.width/SCALE-x));
 		player.armAngle = rad;
 		updateCollisionPoint();
 	}
+
+	//draw the body
 	this.drawBody = function() {
 		ctx.drawImage(player[player.currentBody],
 					player.bodyX,
@@ -217,6 +240,8 @@ function Player() {
 					player.body.width/SCALE,
 					player.body.height/SCALE);
 	}
+
+	//draw the arm, rotated the correct number of radians and positioned on Jon's shoulder
 	this.drawArmRot = function() {
 		//save normal canvas context
 		ctx.save();
@@ -240,9 +265,12 @@ function Player() {
 		//normality restored
 		ctx.restore();
 	}
+
+	//draw the collision dot at calculated location
 	this.drawDot = function() {
-		ctx.drawImage(player.dot, player.collisionx, player.collisiony);
+		ctx.drawImage(player.dot, player.collisionX, player.collisionY);
 	}
+
 	this.draw = function() {
 		this.drawBody();
 		this.drawArmRot();
@@ -263,7 +291,6 @@ function Seal() {
 	this.y = canvas.height - this.img.height/this.sealScale/SCALE;
 	this.dx = 0;
 	this.dy = 0;
-	this.colliding = false;
 
 	//constants
 	this.XDECAY = .2;
@@ -282,8 +309,6 @@ function Seal() {
 	this.colliding = false;
 
 	this.update = function() {
-		//this.colliding = this.checkCollision()
-		
 		if (this.colliding) {
 			//this.dx = this.getCollisionDx();
 			//this.dy = this.getCollisionDy();
@@ -292,9 +317,7 @@ function Seal() {
 			this.dx = -this.dx//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
 			this.dy = -this.dy//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDY);
 		}
-		else if //(this.isOnGround() && this.isStationary()) {
-				(this.isStationary()) {
-			//console.log("working");
+		else if (this.isStationary()) {
 			this.dx = this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
 			this.dy = this.getRandomMovement(this.RANDOMMOVEMENTBOUNDY);
 		}
@@ -328,10 +351,13 @@ function Seal() {
 	this.draw = function() {
 		ctx.drawImage(this.img,this.x,this.y,this.img.width/this.sealScale/SCALE,this.img.height/this.sealScale/SCALE);
 	}
+
+    //unused
 	this.isOnGround = function() {
 		var result = (this.y >= (canvas.height - this.img.height/SCALE - this.DECAY/SCALE));
 		return result;
 	}
+
 	this.decayMovement = function() {
 		if (this.state === this.RANDOM) {
 			this.dx = Math.sign(this.dx)*(Math.abs(this.dx-this.DECAY/SCALE));
@@ -341,15 +367,18 @@ function Seal() {
 
 		}
 	}
+
 	this.getRandomMovement = function(bound) {
 		var sign = Math.random() < .5 ? -1 : 1;
 		return sign*Math.floor(Math.random()*bound);
 	}
+
 	this.isStationary = function() {
 		var result = ( (Math.abs(this.dx) - .2 < 0) && (Math.abs(this.dy) - .7 < 0) && 
 							(this.y >= (canvas.height - this.img.height/SCALE - this.YDECAY)) );
 		return result;
 	}
+
 	this.contains = function(ex, why) {
 		var x = this.x;
 		var y = this.y;
@@ -392,35 +421,32 @@ function draw(entities, canvas, ctx) {
 	//erase
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 
+	//then draw all
 	for (var i = 0; i < entities.length; i++) {
 		entities[i].draw();
 	}
 }
 
 function update() {
-	/*setTimeout(function() {
-        requestAnimationFrame(update);
-    }, 1000 / fps);*/
 
-	//for (var i = 0; i < entities.length; i++) {entities[i].collisionCheck();}
-
-	for (var i = 0; i < entities.length; i++) {entities[i].update();}
+	for (var i = 0; i < entities.length; i++) {
+		entities[i].update();
+	}
 
 	//gameController.update();
 	//-->would decide whether to add new seals or not, randomly and based on counter
-	//for entities, draw them
-	//draw(entities, canvas, ctx);
-
 }
 
 function collisionCheck() {
 	var PLAYER = 0;
-	//NEED TO FIGURE OUT PLAYER.COLLISIONX AND Y: probably implement this in draw or update functions?
-	var COLLISIONCLUBX = player.collisionx;
-	var COLLISIONCLUBY = player.collisiony;
+
+	var COLLISION_CLUB_X = player.collisionX;
+	var COLLISION_CLUB_Y = player.collisionY;
 	var counter = 0;
+
+	//assumes that all entities of entities[1] or greater have .contains(x, y)
 	for (var i = 1; i < entities.length; i++) {
-		if (entities[i].contains(COLLISIONCLUBX, COLLISIONCLUBY)) {
+		if (entities[i].contains(COLLISION_CLUB_X, COLLISION_CLUB_Y)) {
 			entities[i].colliding = true;
 			counter++;
 		} else entities[i].colliding = false;
@@ -433,7 +459,7 @@ function collisionCheck() {
 function gameLoop() {
 	setTimeout(function() {
         requestAnimationFrame(gameLoop);
-    }, 1000 / fps);
+    }, 1000 / FPS);
 
 	collisionCheck();
     update();
