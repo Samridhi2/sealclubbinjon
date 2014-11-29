@@ -404,7 +404,7 @@ function init() {
 	ctx = canvas.getContext("2d");
 
 	if (!Math.sign) {
-		function sign(x){return x>0?1:x<0?-1:x;}
+		function Math.sign(x){return x>0?1:x<0?-1:x;}
 	}
 
 	player = new Player();
