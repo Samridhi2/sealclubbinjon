@@ -403,6 +403,9 @@ function init() {
 	div.appendChild(canvas);
 	ctx = canvas.getContext("2d");
 
+	if (!Math.sign) {
+		function sign(x){return x>0?1:x<0?-1:x;}
+	}
 
 	player = new Player();
 	testSeal = new Seal();
@@ -457,9 +460,15 @@ function collisionCheck() {
 }
 
 function gameLoop() {
-	setTimeout(function() {
-        requestAnimationFrame(gameLoop);
-    }, 1000 / FPS);
+	if (requestAnimationFrame) {
+		setTimeout(function() {
+        	requestAnimationFrame(gameLoop);
+   		}, 1000 / FPS);
+	}
+	else {
+		console.log("REQUEST ANIMATION FRAME NOT SUPPORTED");
+		setTimeout(gameLoop, 1000 / FPS);
+	}
 
 	collisionCheck();
     update();
