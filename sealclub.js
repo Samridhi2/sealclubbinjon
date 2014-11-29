@@ -16,8 +16,15 @@ var canvas,
 	ctx,
 	player,
 	entities,
-	FPS = 45;
-const SCALE = 1;
+	FPS = 45,
+	SCALE = 1; //const
+
+if (!Math.sign) {
+	var sign = function(x) {return x>0?1:x<0?-1:x;};
+}
+else {
+	var sign = function(x) {return Math.sign(x);};
+}
 
 function Player() {
 	//IMAGES
@@ -88,7 +95,7 @@ function Player() {
 		var keyCode = e.keyCode;
 
 		switch (keyCode) {
-			case 65: {;
+			case 65: {
 				player.dx = (-1)*player.MOVEPERTICK;
 				break;
 			}
@@ -142,8 +149,9 @@ function Player() {
 				break;
 			}
 		}
+	};
 
-	}
+
 	this.updateBody = function() {
 		this.bodyX = this.bodyX + this.dx;
 		this.bodyY = this.bodyY + this.dy;
@@ -156,12 +164,12 @@ function Player() {
 		else {
 			this.currentBody = "body";
 		}
-	}
+	};
 
 	this.update = function() {
 		this.updateBody();
 		this.updateArm();
-	}
+	};
 
 	function mat_mult(B, A) {
 		var M = [[0,0,0],[0,0,0],[0,0,0]];
@@ -175,7 +183,7 @@ function Player() {
 		}
 	}
 		return M;
-	}
+	};
 
 	function vecmat_mult(B, A) {
 		var Bp = [0,0,0];
@@ -187,7 +195,7 @@ function Player() {
 			Bp[i] = total;
 		}		
 		return Bp;
-	}
+	};
 
 	function updateCollisionPoint() {
 
@@ -214,14 +222,14 @@ function Player() {
 		var draw_y = draw_vec[1];
 		player.collisionX = draw_x;
 		player.collisionY = draw_y;
-	}
+	};
 
 	//updates the arms X and Y positions every timestep
 	this.updateArm = function() {
 		player.armX = player.bodyX + player.ARMXBUFFER/SCALE;
 		player.armY = player.bodyY + player.ARMYBUFFER/SCALE;
 		updateCollisionPoint();
-	}
+	};
 
 	//makes player.armAngle number of radians to rotate image on mousemove
 	this.updateArmAngle = function(e) {
@@ -230,7 +238,7 @@ function Player() {
 		var rad = Math.atan2((player.bodyY+player.ARMYBUFFER/SCALE-y),(player.bodyX+player.ARMXBUFFER/SCALE+player.arm.width/SCALE-x));
 		player.armAngle = rad;
 		updateCollisionPoint();
-	}
+	};
 
 	//draw the body
 	this.drawBody = function() {
@@ -239,7 +247,7 @@ function Player() {
 					player.bodyY,
 					player.body.width/SCALE,
 					player.body.height/SCALE);
-	}
+	};
 
 	//draw the arm, rotated the correct number of radians and positioned on Jon's shoulder
 	this.drawArmRot = function() {
@@ -264,18 +272,18 @@ function Player() {
 
 		//normality restored
 		ctx.restore();
-	}
+	};
 
 	//draw the collision dot at calculated location
 	this.drawDot = function() {
 		ctx.drawImage(player.dot, player.collisionX, player.collisionY);
-	}
+	};
 
 	this.draw = function() {
 		this.drawBody();
 		this.drawArmRot();
 		this.drawDot();
-	}
+	};
 
 }
 
@@ -346,38 +354,38 @@ function Seal() {
 
 		//decay vals
 		this.decayMovement();
-	}
+	};
 
 	this.draw = function() {
 		ctx.drawImage(this.img,this.x,this.y,this.img.width/this.sealScale/SCALE,this.img.height/this.sealScale/SCALE);
-	}
+	};
 
     //unused
 	this.isOnGround = function() {
 		var result = (this.y >= (canvas.height - this.img.height/SCALE - this.DECAY/SCALE));
 		return result;
-	}
+	};
 
 	this.decayMovement = function() {
 		if (this.state === this.RANDOM) {
-			this.dx = Math.sign(this.dx)*(Math.abs(this.dx-this.DECAY/SCALE));
+			this.dx = sign(this.dx)*(Math.abs(this.dx-this.DECAY/SCALE));
 			this.dy = this.dy + this.YDECAY; //always + YDECAY because gravity
 		}
 		else {
 
 		}
-	}
+	};
 
 	this.getRandomMovement = function(bound) {
-		var sign = Math.random() < .5 ? -1 : 1;
-		return sign*Math.floor(Math.random()*bound);
-	}
+		var theSign = Math.random() < .5 ? -1 : 1;
+		return theSign*Math.floor(Math.random()*bound);
+	};
 
 	this.isStationary = function() {
 		var result = ( (Math.abs(this.dx) - .2 < 0) && (Math.abs(this.dy) - .7 < 0) && 
 							(this.y >= (canvas.height - this.img.height/SCALE - this.YDECAY)) );
 		return result;
-	}
+	};
 
 	this.contains = function(ex, why) {
 		var x = this.x;
@@ -387,7 +395,7 @@ function Seal() {
 		return (((ex >= x) && (ex <= x+width))
 				&&
 				((why >= y) && (why <= y+height)));
-	}
+	};
 }
 
 function dist(x1, y1, x2, y2) {
@@ -403,12 +411,8 @@ function init() {
 	div.appendChild(canvas);
 	ctx = canvas.getContext("2d");
 
-	if (!Math.sign) {
-		function Math.sign(x){return x>0?1:x<0?-1:x;}
-	}
-
-	player = new Player();
-	testSeal = new Seal();
+	var player = new Player();
+	var testSeal = new Seal();
 
 	entities = [player, testSeal];
 
