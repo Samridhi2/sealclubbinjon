@@ -320,7 +320,7 @@ function Seal() {
 		if (this.colliding) {
 			//this.dx = this.getCollisionDx();
 			//this.dy = this.getCollisionDy();
-			console.log("COLLIDING");
+			//console.log("COLLIDING");
 
 			this.dx = -this.dx//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
 			this.dy = -this.dy//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDY);
@@ -344,7 +344,7 @@ function Seal() {
 			this.dy = 0;
 		}
 		else if (this.dy + this.y > canvas.height - this.img.height/this.sealScale/SCALE) {
-			console.log("happening");
+			//console.log("happening");
 			this.y = canvas.height - this.img.height/this.sealScale/SCALE;
 			this.dy = 0;
 		}
