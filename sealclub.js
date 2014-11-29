@@ -411,7 +411,7 @@ function init() {
 	div.appendChild(canvas);
 	ctx = canvas.getContext("2d");
 
-	var player = new Player();
+	player = new Player();
 	var testSeal = new Seal();
 
 	entities = [player, testSeal];
