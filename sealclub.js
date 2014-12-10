@@ -26,6 +26,25 @@ else {
 	var sign = function(x) {return Math.sign(x);};
 }
 
+
+function Timer(spec) {
+	this.date = undefined; //holds new Date() instances
+	this.startTime = undefined; //holds seconds 
+	this.currentTime = undefined; //holds seconds
+	this.duration = spec.duration; //duration is amount of seconds desired, start time
+
+	this.reset = function() {
+		this.date = new Date();
+		this.startTime = Date.now();//this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds() + this.date.get;
+		this.currentTime = Date.now();//this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
+	};
+
+	this.timeIsUp = function() {
+		this.date = new Date();
+		this.currentTime = Date.now();//this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
+		return (this.startTime <= (this.currentTime - this.duration));
+	};
+}
 function Player() {
 	//IMAGES
 	var img = new Image();
@@ -67,27 +86,13 @@ function Player() {
 	//collision stuff
 	this.clubBufferX = 16*this.arm.width/10 / SCALE;
 	this.clubBufferY = 200/SCALE;//7*this.arm.width/10 / SCALE;
+	this.lastCollisionX;
+	this.lastCollisionY;
 	this.collisionX;
 	this.collisionY;
 	this.colliding = false;
-	this.collideTimer = {
-		date: undefined, //holds new Date() instances
-		startTime: undefined, //holds seconds 
-		currentTime: undefined, //holds seconds
-		duration: 1, //duration is amount of seconds desired, start time
-
-		reset: function() {
-			this.date = new Date();
-			this.startTime = this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
-			this.currentTime = this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
-		},
-
-		timeIsUp : function() {
-			this.date = new Date();
-			this.currentTime = this.date.getHours()*360 + this.date.getMinutes()*60 + this.date.getSeconds();
-			return (this.startTime <= (this.currentTime - this.duration));
-		}
-	};
+	this.collideTimer = new Timer({duration: 100});
+	this.faceTimer = new Timer({duration: 1000});
 	this.collideTimer.reset();
 
 	//updates the body's position based on keypress input
@@ -156,9 +161,9 @@ function Player() {
 		this.bodyX = this.bodyX + this.dx;
 		this.bodyY = this.bodyY + this.dy;
 		if (this.colliding) {
-			this.collideTimer.reset();
+			this.faceTimer.reset();
 		}
-		if (this.colliding || !(this.collideTimer.timeIsUp())) {
+		if (this.colliding || !(this.faceTimer.timeIsUp())) {
 			this.currentBody = "bodyHappy";
 		}
 		else {
@@ -220,6 +225,11 @@ function Player() {
 		//draw: locations with respect to the Canvas
 		var draw_x = draw_vec[0];
 		var draw_y = draw_vec[1];
+		if (player.collideTimer.timeIsUp()) {
+			player.lastCollisionX = player.collisionX;
+			player.lastCollisionY = player.collisionY;
+			player.collideTimer.reset();
+		}
 		player.collisionX = draw_x;
 		player.collisionY = draw_y;
 	};
@@ -315,15 +325,16 @@ function Seal() {
 
 	//collision stuff
 	this.colliding = false;
-
+	var dxdy;
 	this.update = function() {
 		if (this.colliding) {
 			//this.dx = this.getCollisionDx();
 			//this.dy = this.getCollisionDy();
 			//console.log("COLLIDING");
-
-			this.dx = -this.dx//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
-			this.dy = -this.dy//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDY);
+			//dxdy = this.calculateCollisionBounce();
+			//this.dx = -this.dx//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
+			//this.dy = -this.dy//this.getRandomMovement(this.RANDOMMOVEMENTBOUNDY);
+			this.bounce();
 		}
 		else if (this.isStationary()) {
 			this.dx = this.getRandomMovement(this.RANDOMMOVEMENTBOUNDX);
@@ -360,6 +371,14 @@ function Seal() {
 		ctx.drawImage(this.img,this.x,this.y,this.img.width/this.sealScale/SCALE,this.img.height/this.sealScale/SCALE);
 	};
 
+	this.calculateCollisionBounce = function() {
+
+		var result = [];
+	}
+	this.bounce = function() {
+		this.dx = player.collisionX - player.lastCollisionX;
+		this.dy = player.collisionY - player.lastCollisionY;
+	}
     //unused
 	this.isOnGround = function() {
 		var result = (this.y >= (canvas.height - this.img.height/SCALE - this.DECAY/SCALE));
