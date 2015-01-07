@@ -3,21 +3,29 @@
 //WITH HELP FROM PAKDEE, PAUL, THEO AND OTHERS
 
 //TO DO:
-//	change setInterval to requestanimationframe √
-//  make global variables not that anymore
-//  change collisions to reflect direction of collision and alter dx, dy accordingly
-//  add start screen (low priority)
-//  make Jon's face light up when he hits a seal √ (sort of)
 //  make Jon able to crouch / make image of Jon crouching
+//  multiple seals
+//  make score visible
+//  make seals die
 
+//LOW PRIORITY TO DO:
+//  make global variables not that anymore
+//  add start screen (low priority)
+
+//DONE:
+//	change setInterval to requestanimationframe √
+//  change collisions to reflect direction of collision and alter dx, dy accordingly √ sort  of
+//  make Jon's face light up when he hits a seal √ (sort of)
 
 
 var canvas,
 	ctx,
 	player,
 	entities,
+	score = 0,
 	FPS = 45,
-	SCALE = 1; //const
+	SCALE = 1,
+	IMG_FILEPATH = "seal-club-assets/"; //const
 
 if (!Math.sign) {
 	var sign = function(x) {return x>0?1:x<0?-1:x;};
@@ -45,20 +53,21 @@ function Timer(spec) {
 		return (this.startTime <= (this.currentTime - this.duration));
 	};
 }
+
 function Player() {
 	//IMAGES
 	var img = new Image();
-	img.src = "img/jon-bod.png";
+	img.src = IMG_FILEPATH + "jon-bod.png";
 	this.body = img;
 	var army = new Image();
-	army.src = "img/jon-arm-club.png";
+	army.src = IMG_FILEPATH + "jon-arm-club.png";
 	this.arm = army;
 	var img2 = new Image();
-	img2.src = "img/jon-bod-happy.png";
+	img2.src = IMG_FILEPATH + "jon-bod-happy.png";
 	this.bodyHappy = img2;
 	this.currentBody = "body";
 	var img3 = new Image();
-	img3.src = "img/dot.png";
+	img3.src = IMG_FILEPATH + "dot.png";
 	this.dot = img3;
 
 	//MOVEMENT
@@ -90,10 +99,12 @@ function Player() {
 	this.lastCollisionY;
 	this.collisionX;
 	this.collisionY;
+	this.wasColliding = false;
 	this.colliding = false;
-	this.collideTimer = new Timer({duration: 100});
+	this.collideTimer = new Timer({duration: 50});
 	this.faceTimer = new Timer({duration: 1000});
 	this.collideTimer.reset();
+	this.faceTimer.startTime = Date.now() - this.faceTimer.duration;
 
 	//updates the body's position based on keypress input
 	this.keyDown = function(e) {
@@ -287,12 +298,13 @@ function Player() {
 	//draw the collision dot at calculated location
 	this.drawDot = function() {
 		ctx.drawImage(player.dot, player.collisionX, player.collisionY);
+		ctx.drawImage(player.dot, player.lastCollisionX, player.lastCollisionY);
 	};
 
 	this.draw = function() {
 		this.drawBody();
 		this.drawArmRot();
-		this.drawDot();
+		//this.drawDot();
 	};
 
 }
@@ -301,7 +313,7 @@ function Player() {
 function Seal() {
 
 	var img = new Image();
-	img.src = "img/seal.png";
+	img.src = IMG_FILEPATH + "seal.png";
 	this.img = img;
 
 	this.sealScale = 2;
@@ -432,8 +444,9 @@ function init() {
 
 	player = new Player();
 	var testSeal = new Seal();
+	var seal2 = new Seal();
 
-	entities = [player, testSeal];
+	entities = [player, testSeal, seal2];
 
 	window.addEventListener("keydown",player.keyDown, false);
 	window.addEventListener("keyup",player.keyUp, false);
@@ -470,6 +483,8 @@ function collisionCheck() {
 	var COLLISION_CLUB_Y = player.collisionY;
 	var counter = 0;
 
+	entities[PLAYER].wasColliding = entities[PLAYER].colliding;
+
 	//assumes that all entities of entities[1] or greater have .contains(x, y)
 	for (var i = 1; i < entities.length; i++) {
 		if (entities[i].contains(COLLISION_CLUB_X, COLLISION_CLUB_Y)) {
@@ -480,6 +495,11 @@ function collisionCheck() {
 	if (counter > 0) {
 		entities[PLAYER].colliding = true;
 	} else entities[PLAYER].colliding = false;
+
+	if (entities[PLAYER].wasColliding && !(entities[PLAYER].colliding)) {
+		score++;
+		console.log(score);
+	}
 }
 
 function gameLoop() {
